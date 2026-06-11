@@ -163,7 +163,7 @@ export default function Home() {
     <>
       <ParticleCanvas />
 
-      <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh', backgroundColor: C.cream }}>
+      <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
 
         {/* ── Hero ── */}
         <section style={{ maxWidth: 900, margin: '0 auto', padding: '72px 24px 56px', textAlign: 'center' }}>
