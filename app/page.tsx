@@ -26,11 +26,9 @@ function ParticleCanvas() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     let raf: number
-
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize()
     window.addEventListener('resize', resize)
-
     const pts = Array.from({ length: 120 }, (_, i) => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
@@ -39,7 +37,6 @@ function ParticleCanvas() {
       r: 2 + Math.random() * 2,
       col: i % 2 === 0 ? 'rgba(232,137,106,0.5)' : 'rgba(45,53,97,0.35)',
     }))
-
     const CONNECT_SQ = 180 * 180
     const tick = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -56,12 +53,11 @@ function ParticleCanvas() {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.col; ctx.fill()
       }
       ctx.beginPath(); ctx.strokeStyle = 'rgba(232,137,106,0.2)'; ctx.lineWidth = 0.8
-      for (let i = 0; i < pts.length; i++) {
+      for (let i = 0; i < pts.length; i++)
         for (let j = i + 1; j < pts.length; j++) {
           const a = pts[i], b = pts[j]
           if ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 < CONNECT_SQ) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y) }
         }
-      }
       ctx.stroke()
       raf = requestAnimationFrame(tick)
     }
@@ -85,30 +81,126 @@ function SectionHeader({ label, title, sub }: { label: string; title: string; su
   )
 }
 
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
-function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+// ─── Immersive Lightbox ────────────────────────────────────────────────────────
+function Lightbox({ idx, students, onClose, onPrev, onNext }: {
+  idx: number
+  students: typeof STUDENTS
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+}) {
+  const s = students[idx]
   return (
     <div
+      className="lb-overlay"
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
-        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'fixed', inset: 0,
+        background: 'rgba(15,10,5,0.92)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '0 40px',
       }}
     >
+      {/* Close */}
       <button
         onClick={onClose}
         style={{
-          position: 'absolute', top: '24px', right: '24px',
-          color: 'white', fontSize: '2rem', cursor: 'pointer',
-          background: 'none', border: 'none', outline: 'none', lineHeight: 1,
+          position: 'absolute', top: '16px', right: '16px',
+          width: '36px', height: '36px', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.15)', color: 'white',
+          border: 'none', fontSize: '1.25rem', cursor: 'pointer', outline: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
       >✕</button>
-      <img
-        src={src}
-        alt="放大預覽"
+
+      {/* Content container */}
+      <div
+        className="lb-content"
         onClick={e => e.stopPropagation()}
-        style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '12px', objectFit: 'contain' }}
-      />
+        style={{
+          position: 'relative',
+          maxWidth: '880px', width: '90vw',
+          borderRadius: '20px', overflow: 'hidden',
+          display: 'grid', gridTemplateColumns: '1.4fr 1fr',
+        }}
+      >
+        {/* Prev */}
+        <button
+          onClick={e => { e.stopPropagation(); onPrev() }}
+          style={{
+            position: 'absolute', left: '-20px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'white', color: D.navy, border: 'none',
+            fontSize: '1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            cursor: 'pointer', outline: 'none', zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: idx === 0 ? 0.3 : 1,
+          }}
+        >‹</button>
+
+        {/* Next */}
+        <button
+          onClick={e => { e.stopPropagation(); onNext() }}
+          style={{
+            position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'white', color: D.navy, border: 'none',
+            fontSize: '1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            cursor: 'pointer', outline: 'none', zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: idx === students.length - 1 ? 0.3 : 1,
+          }}
+        >›</button>
+
+        {/* Left: image */}
+        <div style={{ background: '#111', overflow: 'hidden', minHeight: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={s.img}
+            alt={s.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={e => {
+              const el = e.currentTarget; el.style.display = 'none'
+              const p = el.parentElement; if (p) { p.style.background = '#1a1a1a'; p.innerHTML = '<span style="color:#555;font-size:12px">圖片即將放入</span>' }
+            }}
+          />
+        </div>
+
+        {/* Right: info */}
+        <div style={{ background: '#FAF7F2', padding: '40px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          {/* Top */}
+          <div>
+            <span style={{ background: '#FDF0E8', color: D.coral, fontSize: '0.7rem', letterSpacing: '0.1em', padding: '4px 12px', borderRadius: '100px', display: 'inline-block', marginBottom: '20px', fontWeight: 600, textTransform: 'uppercase' as const }}>{s.tag}</span>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: D.navy, marginBottom: '8px', lineHeight: 1.3 }}>{s.title}</h2>
+            <p style={{ fontSize: '0.875rem', color: D.gray, lineHeight: 1.6, marginBottom: '24px', margin: '0 0 24px' }}>{s.desc}</p>
+          </div>
+
+          {/* Student info */}
+          <div style={{ borderTop: '1px solid #F0EBE3', paddingTop: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#FDF0E8', color: D.coral, fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.init}</div>
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: D.navy }}>{s.name}</div>
+                <div style={{ fontSize: '0.8125rem', color: D.light, marginTop: '2px' }}>{s.bg}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quote */}
+          <blockquote style={{ borderLeft: `3px solid ${D.coral}`, padding: '14px 18px', background: '#FDF0E8', borderRadius: '0 10px 10px 0', fontSize: '0.875rem', color: '#5C5C5C', lineHeight: 1.8, fontStyle: 'italic', margin: 0 }}>
+            「{s.quote}」
+          </blockquote>
+
+          {/* Dots indicator */}
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '24px' }}>
+            {students.map((_, i) => (
+              <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: i === idx ? D.coral : D.border, transition: 'background 0.2s' }} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -117,25 +209,35 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
 const STUDENTS = [
   {
     tag: '行政 → 產品設計', init: '林',
-    title: '旅伴揪團 App', desc: '快速發起行程、媒合想一起出遊的旅伴',
+    title: '旅伴揪團 App',
+    desc: '讓想找旅伴出遊的人快速媒合，發起屬於自己的行程。',
     img: '/students/togetherly.png',
     name: '林同學', bg: '行政助理 5 年，希望培養第二專長',
     quote: '原本以為自己完全不懂設計，沒想到透過課程一步一步拆解需求，最後真的把想法做成作品。最大的收穫是開始知道怎麼用設計解決問題，而不是只把畫面做漂亮。',
   },
   {
     tag: 'UI 設計師 → 產品思維', init: '陳',
-    title: '寵物健康管理平台', desc: '記錄毛小孩疫苗、看診與健康資訊',
+    title: '寵物健康管理平台',
+    desc: '協助飼主統一管理毛小孩的疫苗、看診與健康紀錄。',
     img: '/students/petcare.png',
     name: '陳同學', bg: 'UI 設計師 3 年，希望提升產品思維',
     quote: '以前做設計比較專注在畫面細節，這次從使用者需求開始思考，才發現產品規劃其實比畫圖更重要。現在提案時也更有邏輯了。',
   },
   {
     tag: '餐飲店長 → 科技轉職', init: '王',
-    title: '排隊點餐系統', desc: '線上取號、查看等候進度，告別混亂',
+    title: '排隊點餐系統',
+    desc: '線上取號、即時查看等候進度，告別現場排隊混亂。',
     img: '/students/queue.png',
     name: '王同學', bg: '餐飲業店長，希望轉職進入科技業',
     quote: '以前覺得科技業離我很遠，但透過實際做出作品集，才發現自己的工作經驗也能轉化成產品想法。完成作品後對轉職更有信心了。',
   },
+]
+
+const STATS = [
+  { label: '真實學員案例', target: 3, suffix: '+' },
+  { label: '從0完成產品', target: 100, suffix: '%' },
+  { label: '需要寫程式', target: 0, suffix: '' },
+  { label: '課程時數', target: 48, suffix: 'h' },
 ]
 
 const QUESTIONS = [
@@ -156,8 +258,11 @@ export default function Home() {
   const [timerRunning, setTimerRunning] = useState(false)
   const ivRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Lightbox
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  // Lightbox (index-based)
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+
+  // Hero counting animation
+  const [heroNums, setHeroNums] = useState([0, 0, 0, 0])
 
   // Before/After slider
   const [sliderPos, setSliderPos] = useState(50)
@@ -176,20 +281,38 @@ export default function Home() {
     return () => { if (ivRef.current) clearInterval(ivRef.current) }
   }, [timerRunning])
 
-  // ESC key closes lightbox
+  // Hero counting
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxImage(null) }
+    const animate = (idx: number, target: number, duration: number) => {
+      if (target === 0) return
+      const start = Date.now()
+      const step = () => {
+        const t = Math.min((Date.now() - start) / duration, 1)
+        const eased = 1 - Math.pow(1 - t, 3)
+        setHeroNums(prev => { const n = [...prev]; n[idx] = Math.round(eased * target); return n })
+        if (t < 1) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    }
+    animate(0, 3, 1200)
+    animate(1, 100, 1500)
+    animate(3, 48, 1000)
+  }, [])
+
+  // ESC key for lightbox
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxIdx(null) }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
-  // Slider drag (global mouse/touch)
+  // Slider drag
   useEffect(() => {
     const getPos = (clientX: number) => {
       const el = sliderRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
-      setSliderPos(Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100)))
+      setSliderPos(Math.max(2, Math.min(98, (clientX - rect.left) / rect.width * 100)))
     }
     const onMove = (e: MouseEvent) => { if (isDragging.current) getPos(e.clientX) }
     const onUp = () => { isDragging.current = false }
@@ -215,53 +338,105 @@ export default function Home() {
     const el = sliderRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
-    setSliderPos(Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100)))
+    setSliderPos(Math.max(2, Math.min(98, (clientX - rect.left) / rect.width * 100)))
   }
 
   return (
     <>
       <ParticleCanvas />
-      {lightboxImage && <Lightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />}
+
+      {lightboxIdx !== null && (
+        <Lightbox
+          idx={lightboxIdx}
+          students={STUDENTS}
+          onClose={() => setLightboxIdx(null)}
+          onPrev={() => setLightboxIdx(i => (i !== null && i > 0 ? i - 1 : i))}
+          onNext={() => setLightboxIdx(i => (i !== null && i < STUDENTS.length - 1 ? i + 1 : i))}
+        />
+      )}
 
       <style>{`
         .tab-btn { transition: all 0.2s; }
         .tab-btn:hover:not(.tab-active) { border-color: ${D.coral} !important; color: ${D.coral} !important; }
-        .s-card { transition: border-color 0.2s; }
+        .s-card { transition: border-color 0.2s, box-shadow 0.2s; }
         .s-card:hover { border-color: ${D.coral} !important; }
         .opt-btn { transition: all 0.2s; }
         .opt-btn:hover:not(.opt-active) { border-color: ${D.coral} !important; color: ${D.coral} !important; }
-        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
-        .bounce { animation: bounce 1.8s ease-in-out infinite; display:inline-block; }
         .lb-img { transition: transform 0.2s; cursor: pointer; display: block; }
         .lb-img:hover { transform: scale(1.02); }
-        .slider-container { height: 560px; }
-        @media (max-width: 640px) { .slider-container { height: 380px; } }
+
+        @keyframes gradientShift {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes pulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(232,137,106,0.4); }
+          50%      { box-shadow: 0 0 0 8px rgba(232,137,106,0); }
+        }
+        @keyframes float {
+          0%,100% { transform: translateY(0); }
+          50%     { transform: translateY(-20px); }
+        }
+        @keyframes bounce {
+          0%,100% { transform: translateY(0); }
+          50%     { transform: translateY(8px); }
+        }
+        @keyframes lbFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes lbScaleIn { from { transform: scale(0.96); } to { transform: scale(1); } }
+        .lb-overlay  { animation: lbFadeIn 0.25s ease; }
+        .lb-content  { animation: lbScaleIn 0.25s ease; }
+
+        .slider-wrap { height: 620px; }
+        @media (max-width: 640px) { .slider-wrap { height: 400px; } }
       `}</style>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ══════════ HERO ══════════ */}
-        <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2rem' }}>
-          <div style={{ textAlign: 'center', width: '100%', maxWidth: '720px', margin: '0 auto' }}>
-            <div style={{ display: 'inline-block', background: D.coral, color: 'white', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 18px', borderRadius: '100px', marginBottom: '2rem', fontWeight: 600 }}>
+        <section style={{
+          minHeight: '100vh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 2rem',
+          position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(135deg, #FAF7F2 0%, #FDF0E8 40%, #F5EDE0 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradientShift 8s ease infinite',
+        }}>
+
+          {/* Floating decorative circles */}
+          <div style={{ position: 'absolute', top: '-60px', left: '-80px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,137,106,0.12) 0%, transparent 70%)', animation: 'float 6s ease-in-out infinite', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,137,106,0.12) 0%, transparent 70%)', animation: 'float 8s ease-in-out infinite reverse', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: '30%', right: '5%', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,137,106,0.10) 0%, transparent 70%)', animation: 'float 5s ease-in-out 2s infinite', pointerEvents: 'none' }} />
+
+          <div style={{ textAlign: 'center', width: '100%', maxWidth: '720px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            {/* Badge with pulse */}
+            <div style={{ display: 'inline-block', background: D.coral, color: 'white', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 18px', borderRadius: '100px', marginBottom: '2rem', fontWeight: 600, animation: 'pulse 2.5s ease infinite' }}>
               UIUX × Vibe Coding 實戰課程
             </div>
+
             <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700, color: D.navy, lineHeight: 1.25 }}>
               提出好問題，<br />永遠比給出答案更有強度。
             </h1>
-            <p style={{ marginTop: '1.5rem', maxWidth: '560px', margin: '1.5rem auto 0', color: D.gray, fontSize: '0.9375rem', lineHeight: 1.7 }}>
+            <p style={{ maxWidth: '560px', margin: '1.5rem auto 0', color: D.gray, fontSize: '0.9375rem', lineHeight: 1.7 }}>
               先學會思考，再善用工具。把想法化為有價值的產品，幫助更多人，創造更多影響力。
             </p>
+
+            {/* Counting stats */}
             <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
-              {[{ num: '3+', label: '真實學員案例' }, { num: '100%', label: '從0完成產品' }, { num: '0', label: '需要寫程式' }, { num: '48h', label: '課程時數' }].map((s, i) => (
-                <div key={i} style={{ background: D.card, borderRadius: '16px', padding: '24px 16px', boxShadow: D.shadow }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 700, color: D.coral, lineHeight: 1 }}>{s.num}</div>
+              {STATS.map((s, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: '16px', padding: '24px 16px', boxShadow: D.shadow }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 700, color: D.coral, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    {heroNums[i]}{s.suffix}
+                  </div>
                   <div style={{ fontSize: '0.8rem', color: D.light, marginTop: '4px' }}>{s.label}</div>
                 </div>
               ))}
             </div>
+
+            {/* Arrow */}
             <div style={{ marginTop: '3rem' }}>
-              <span className="bounce" style={{ fontSize: '1.5rem', color: D.coral }}>↓</span>
+              <span style={{ display: 'inline-block', fontSize: '1.5rem', color: D.coral, animation: 'bounce 1.5s ease-in-out infinite' }}>↓</span>
             </div>
           </div>
         </section>
@@ -275,12 +450,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ══════════ TAB 0 ══════════ */}
+        {/* ══════════ TAB 0 : Vibe Coding ══════════ */}
         {tab === 0 && (
           <div style={{ padding: '80px 0', ...maxW }}>
             <SectionHeader label="WHAT IS VIBE CODING" title="不需要會寫程式，用說的就能做出產品" sub="用自然語言和 AI 對話，讓 AI 幫你把想法變成真實可用的工具。" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', marginBottom: '20px' }}>
-              {[{ icon: '💬', title: '你不需要會寫程式', body: 'Vibe Coding 是用自然語言和 AI 對話，讓 AI 幫你寫程式、做出工具或網站的方式。你只需要說清楚你想要什麼。' }, { icon: '🎯', title: '你專注在想解決什麼問題', body: 'AI 幫你處理怎麼做出來。就像有一位很厲害的 AI 工程師助手，隨時待命，零加班費。' }].map((c, i) => (
+              {[
+                { icon: '💬', title: '你不需要會寫程式', body: 'Vibe Coding 是用自然語言和 AI 對話，讓 AI 幫你寫程式、做出工具或網站的方式。你只需要說清楚你想要什麼。' },
+                { icon: '🎯', title: '你專注在想解決什麼問題', body: 'AI 幫你處理怎麼做出來。就像有一位很厲害的 AI 工程師助手，隨時待命，零加班費。' },
+              ].map((c, i) => (
                 <div key={i} style={{ background: D.card, borderRadius: '16px', padding: '32px', boxShadow: D.shadow }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#FDF0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', marginBottom: '20px' }}>{c.icon}</div>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: D.navy, marginBottom: '10px' }}>{c.title}</h3>
@@ -321,7 +499,7 @@ export default function Home() {
         {/* ══════════ TAB 1 : 學員成果 ══════════ */}
         {tab === 1 && (
           <div style={{ padding: '80px 0', ...maxW }}>
-            <SectionHeader label="STUDENT SHOWCASE" title="素人也能做出真實產品" />
+            <SectionHeader label="STUDENT SHOWCASE" title="素人也能做出真實產品" sub="三位學員從零開始，用設計思考 × Vibe Coding 完成真實可用的產品。" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', alignItems: 'start' }}>
               {STUDENTS.map((s, i) => (
                 <div key={i} className="s-card" style={{ background: D.card, borderRadius: '16px', overflow: 'hidden', boxShadow: D.shadow, border: '1.5px solid transparent' }}>
@@ -329,22 +507,22 @@ export default function Home() {
                   <div style={{ padding: '24px' }}>
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: D.navy, marginBottom: '6px' }}>{s.title}</h3>
                     <p style={{ fontSize: '0.9375rem', color: D.gray, lineHeight: 1.7, marginBottom: '16px' }}>{s.desc}</p>
-                    <button onClick={() => setExpanded(expanded === i ? null : i)} style={{ color: D.coral, fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', background: 'none', border: 'none', padding: 0, outline: 'none' }}>
+                    <button
+                      onClick={() => setExpanded(expanded === i ? null : i)}
+                      style={{ color: D.coral, fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', background: 'none', border: 'none', padding: 0, outline: 'none' }}
+                    >
                       {expanded === i ? '收起 ▲' : '展開成果 ▼'}
                     </button>
 
                     {expanded === i && (
                       <div style={{ borderTop: '1px solid #F0EBE3', paddingTop: '20px', marginTop: '16px' }}>
-                        {/* ── Lightbox-enabled image ── */}
-                        <div
-                          style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', background: '#f3f4f6', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
+                        <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', background: '#f3f4f6', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <img
                             src={s.img}
                             alt={s.title}
                             className="lb-img"
                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
-                            onClick={() => setLightboxImage(s.img)}
+                            onClick={() => setLightboxIdx(i)}
                             onError={e => {
                               const el = e.currentTarget; el.style.display = 'none'
                               const p = el.parentElement; if (p) p.innerHTML = '<span style="color:#ccc;font-size:12px">圖片即將放入</span>'
@@ -380,112 +558,89 @@ export default function Home() {
             {/* ── Drag Slider ── */}
             <div
               ref={sliderRef}
-              className="slider-container"
+              className="slider-wrap"
               onMouseDown={e => handleSliderStart(e.clientX)}
               onTouchStart={e => handleSliderStart(e.touches[0].clientX)}
-              style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', cursor: 'col-resize', boxShadow: D.shadow, userSelect: 'none' }}
+              style={{
+                position: 'relative', overflow: 'hidden',
+                borderRadius: '20px', cursor: 'col-resize',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
+                userSelect: 'none',
+              }}
             >
-
-              {/* ── AFTER layer (bottom, full width) ── */}
-              <div style={{ position: 'absolute', inset: 0, background: '#FAF5EE', overflow: 'hidden' }}>
+              {/* ── AFTER layer (bottom, real screenshot) ── */}
+              <div style={{ position: 'absolute', inset: 0, background: '#FAF5EE' }}>
+                <img
+                  src="/after/after_2.png"
+                  alt="After - 設計思考版本"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                />
                 {/* After label */}
-                <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 2, background: 'white', color: D.coral, padding: '8px 16px', borderRadius: '0 0 0 12px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                <div style={{
+                  position: 'absolute', top: '16px', right: '16px',
+                  background: D.navy, color: 'white',
+                  padding: '8px 18px', borderRadius: '100px',
+                  fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap', pointerEvents: 'none',
+                }}>
                   AFTER ✦ 設計思考 × Vibe Coding
                 </div>
-
-                <div style={{ padding: '20px', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
-                  {/* Navbar */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: D.navy, borderRadius: '12px', padding: '10px 16px', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: D.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'white', fontWeight: 700 }}>▲</div>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'white', letterSpacing: '0.03em' }}>一起走 TOGETHERLY</span>
-                    </div>
-                    <button style={{ background: D.coral, color: 'white', border: 'none', borderRadius: '100px', padding: '5px 14px', fontSize: '0.6875rem', cursor: 'pointer', fontWeight: 600 }}>＋ 發起旅程</button>
-                  </div>
-
-                  {/* Hero text */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <div style={{ fontSize: 'clamp(1.25rem,3vw,1.75rem)', fontWeight: 800, color: D.navy, lineHeight: 1.2 }}>下一段旅程，<br />遇見對的人。</div>
-                  </div>
-
-                  {/* Search bar */}
-                  <div style={{ background: 'white', borderRadius: '100px', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#bbb', flex: 1 }}>📍 目的地 &nbsp; 📅 出發日期</span>
-                    <div style={{ background: D.navy, color: 'white', borderRadius: '100px', padding: '5px 14px', fontSize: '0.6875rem', fontWeight: 600 }}>搜尋</div>
-                  </div>
-
-                  {/* Trip cards */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {[
-                      { grad: 'linear-gradient(135deg,#E8896A,#c96a4a)', emoji: '🏔', dest: '合歡山追星兩天一夜', sub: '南投 ‧ 自然探索', date: '7/5 出發' },
-                      { grad: 'linear-gradient(135deg,#2D3561,#4a5282)', emoji: '⛩', dest: '九份老街半日遊', sub: '新北九份 ‧ 文化體驗', date: '6/21 出發' },
-                    ].map((c, i) => (
-                      <div key={i} style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', display: 'flex', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                        <div style={{ width: '72px', flexShrink: 0, background: c.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>{c.emoji}</div>
-                        <div style={{ flex: 1, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                          <div>
-                            <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: D.navy }}>{c.dest}</div>
-                            <div style={{ fontSize: '0.6875rem', color: D.light, marginTop: '2px' }}>{c.sub} ‧ {c.date}</div>
-                          </div>
-                          <button style={{ background: D.coral, color: 'white', border: 'none', borderRadius: '100px', padding: '5px 12px', fontSize: '0.6875rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>我想加入</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
-              {/* ── BEFORE layer (top, clipped) ── */}
-              <div style={{ position: 'absolute', inset: 0, clipPath: `inset(0 ${(100 - sliderPos).toFixed(2)}% 0 0)`, background: '#F2F2F2', overflow: 'hidden' }}>
+              {/* ── BEFORE layer (clipped by clip-path) ── */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                clipPath: `inset(0 ${(100 - sliderPos).toFixed(2)}% 0 0)`,
+                background: '#F2F2F2',
+              }}>
+                <img
+                  src="/before/before1.png"
+                  alt="Before - 素人版本"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                />
                 {/* Before label */}
-                <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 2, background: '#E0DDD6', color: '#888', padding: '8px 16px', borderRadius: '0 0 12px 0', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                <div style={{
+                  position: 'absolute', top: '16px', left: '16px',
+                  background: 'rgba(255,255,255,0.9)', color: '#888',
+                  padding: '8px 18px', borderRadius: '100px',
+                  fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap', pointerEvents: 'none',
+                }}>
                   BEFORE 素人 Vibe Coding
                 </div>
-
-                <div style={{ padding: '20px', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
-                  {/* Title bar */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', marginTop: '4px', border: '1px solid #E5E5E5' }}>
-                    <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#333' }}>旅伴揪團</span>
-                    <button style={{ background: '#1f2937', color: 'white', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '0.75rem', cursor: 'pointer' }}>＋ 發起旅程</button>
-                  </div>
-
-                  {/* Filter tabs */}
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-                    {['全部', '招募中', '我的旅程'].map((t, i) => (
-                      <div key={i} style={{ padding: '5px 12px', borderRadius: '100px', fontSize: '0.75rem', background: i === 0 ? '#E0E0E0' : 'transparent', color: '#888', border: '1px solid #E0E0E0' }}>{t}</div>
-                    ))}
-                  </div>
-
-                  {/* Trip cards */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {[
-                      { title: '九份老街半日遊', loc: '新北九份', date: '6/21' },
-                      { title: '合歡山追星兩天一夜', loc: '南投', date: '7/5' },
-                      { title: '京都賞楓五日遊', loc: '日本京都', date: '11/10' },
-                    ].map((c, i) => (
-                      <div key={i} style={{ background: 'white', border: '1px solid #E5E5E5', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <div>
-                          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#444', marginBottom: '3px' }}>{c.title}</div>
-                          <div style={{ fontSize: '0.6875rem', color: '#aaa' }}>{c.loc} ‧ {c.date} ‧ <span style={{ color: '#888' }}>招募中</span></div>
-                        </div>
-                        <button style={{ background: 'transparent', color: '#666', border: '1px solid #CCC', borderRadius: '6px', padding: '4px 10px', fontSize: '0.6875rem', cursor: 'pointer', flexShrink: 0 }}>加入旅程</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
-              {/* ── Divider line + handle ── */}
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${sliderPos}%`, width: '3px', background: 'white', boxShadow: '0 0 12px rgba(0,0,0,0.3)', transform: 'translateX(-50%)', pointerEvents: 'none', zIndex: 3 }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '44px', height: '44px', borderRadius: '50%', background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', fontWeight: 700, color: D.coral }}>
-                  ◀▶
-                </div>
+              {/* ── Divider line ── */}
+              <div style={{
+                position: 'absolute', top: 0, bottom: 0,
+                left: `${sliderPos}%`,
+                width: '3px', background: 'white',
+                boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
+                transform: 'translateX(-50%)',
+                pointerEvents: 'none', zIndex: 3,
+              }} />
+
+              {/* ── Handle circle ── */}
+              <div style={{
+                position: 'absolute', top: '50%',
+                left: `${sliderPos}%`,
+                transform: 'translate(-50%,-50%)',
+                width: '48px', height: '48px', borderRadius: '50%',
+                background: 'white',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: '4px', color: D.coral, fontSize: '0.875rem', fontWeight: 700,
+                pointerEvents: 'none', zIndex: 4,
+              }}>
+                ‹ ›
               </div>
             </div>
 
-            {/* Hint text */}
+            {/* Hint */}
             <div style={{ textAlign: 'center', color: D.light, fontSize: '0.875rem', marginTop: '16px' }}>
-              ← 左右拖曳查看差異 →
+              ← 左右拖曳，感受設計思考帶來的差距 →
             </div>
 
             {/* Insight */}
