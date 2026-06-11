@@ -62,9 +62,9 @@ function ParticleCanvas() {
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
-function SectionHeader({ label, title, sub }: { label: string; title: string; sub?: string }) {
+function SectionHeader({ label, title, sub, className }: { label: string; title: string; sub?: string; className?: string }) {
   return (
-    <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+    <div className={className} style={{ textAlign: 'center', marginBottom: '56px' }}>
       <div style={{ fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: D.coral, fontWeight: 600, marginBottom: '12px' }}>{label}</div>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: D.navy, marginBottom: sub ? '12px' : 0 }}>{title}</h2>
       {sub && <p style={{ fontSize: '0.9375rem', color: D.gray, lineHeight: 1.7, maxWidth: '520px', margin: '0 auto' }}>{sub}</p>}
@@ -340,6 +340,16 @@ export default function Home() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  // Scroll reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => { entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add('visible') }) },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    )
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [tab])
+
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   const maxW = { maxWidth: '1000px', margin: '0 auto', paddingLeft: '2rem', paddingRight: '2rem' }
@@ -405,16 +415,16 @@ export default function Home() {
           <div style={{ position: 'absolute', top: '30%', right: '5%', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,137,106,0.10) 0%, transparent 70%)', animation: 'float 5s ease-in-out 2s infinite', pointerEvents: 'none' }} />
 
           <div style={{ textAlign: 'center', width: '100%', maxWidth: '720px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'inline-block', background: D.coral, color: 'white', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 18px', borderRadius: '100px', marginBottom: '2rem', fontWeight: 600, animation: 'pulse 2.5s ease infinite' }}>
+            <div className="reveal" style={{ display: 'inline-block', background: D.coral, color: 'white', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 18px', borderRadius: '100px', marginBottom: '2rem', fontWeight: 600, animation: 'pulse 2.5s ease infinite' }}>
               UIUX × Vibe Coding 實戰課程
             </div>
-            <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700, color: D.navy, lineHeight: 1.25 }}>
+            <h1 className="reveal reveal-delay-1" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700, color: D.navy, lineHeight: 1.25 }}>
               提出好問題，<br />永遠比給出答案更有強度。
             </h1>
-            <p style={{ maxWidth: '560px', margin: '1.5rem auto 0', color: D.gray, fontSize: '0.9375rem', lineHeight: 1.7 }}>
+            <p className="reveal reveal-delay-2" style={{ maxWidth: '560px', margin: '1.5rem auto 0', color: D.gray, fontSize: '0.9375rem', lineHeight: 1.7 }}>
               先學會思考，再善用工具。把想法化為有價值的產品，幫助更多人，創造更多影響力。
             </p>
-            <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+            <div className="reveal reveal-delay-3" style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               {STATS.map((s, i) => (
                 <div key={i} style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: '16px', padding: '24px 16px', boxShadow: D.shadow }}>
                   <div style={{ fontSize: '2rem', fontWeight: 700, color: D.coral, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{heroNums[i]}{s.suffix}</div>
@@ -440,7 +450,7 @@ export default function Home() {
         {/* ══════════ TAB 0 : Vibe Coding ══════════ */}
         {tab === 0 && (
           <div style={{ padding: '80px 0', ...maxW }}>
-            <SectionHeader label="WHAT IS VIBE CODING" title="不需要會寫程式，用說的就能做出產品" sub="用自然語言和 AI 對話，讓 AI 幫你把想法變成真實可用的工具。" />
+            <SectionHeader label="WHAT IS VIBE CODING" title="不需要會寫程式，用說的就能做出產品" sub="用自然語言和 AI 對話，讓 AI 幫你把想法變成真實可用的工具。" className="reveal" />
 
             {/* Feature cards with SVG icons */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', marginBottom: '20px' }}>
@@ -448,7 +458,7 @@ export default function Home() {
                 { Icon: IconCode, title: '你不需要會寫程式', body: 'Vibe Coding 是用自然語言和 AI 對話，讓 AI 幫你寫程式、做出工具或網站的方式。你只需要說清楚你想要什麼。' },
                 { Icon: IconTarget, title: '你專注在想解決什麼問題', body: 'AI 幫你處理怎麼做出來。就像有一位很厲害的 AI 工程師助手，隨時待命，零加班費。' },
               ].map(({ Icon, title, body }, i) => (
-                <div key={i} style={{ background: D.card, borderRadius: '16px', padding: '32px', boxShadow: D.shadow }}>
+                <div key={i} className={`reveal reveal-delay-${i + 1}`} style={{ background: D.card, borderRadius: '16px', padding: '32px', boxShadow: D.shadow }}>
                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FDF0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
                     <Icon />
                   </div>
@@ -460,7 +470,7 @@ export default function Home() {
 
             {/* Comparison */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', marginBottom: '20px' }}>
-              <div style={{ background: '#F5F4F0', borderRadius: '16px', padding: '32px' }}>
+              <div className="reveal reveal-delay-1" style={{ background: '#F5F4F0', borderRadius: '16px', padding: '32px' }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#888', letterSpacing: '0.05em', marginBottom: '20px' }}>傳統寫程式</div>
                 {['學語言', '寫程式碼', '測試除錯', '花很多時間還不一定做得出來'].map((t, i) => (
                   <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '12px', fontSize: '0.9375rem', color: '#999' }}>
@@ -468,7 +478,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ background: '#FDF0E8', borderRadius: '16px', padding: '32px', border: '1.5px solid rgba(232,137,106,0.3)' }}>
+              <div className="reveal reveal-delay-2" style={{ background: '#FDF0E8', borderRadius: '16px', padding: '32px', border: '1.5px solid rgba(232,137,106,0.3)' }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: D.coral, letterSpacing: '0.05em', marginBottom: '20px' }}>Vibe Coding ✦</div>
                 {['用說的像聊天一樣', 'AI 幫你寫程式', '快速看到成果', '持續優化越來越好用'].map((t, i) => (
                   <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '12px', fontSize: '0.9375rem', color: D.navy }}>
@@ -479,7 +489,7 @@ export default function Home() {
             </div>
 
             {/* Steps */}
-            <div style={{ display: 'flex', borderRadius: '16px', overflow: 'hidden', boxShadow: D.shadow, flexWrap: 'wrap' }}>
+            <div className="reveal reveal-delay-1" style={{ display: 'flex', borderRadius: '16px', overflow: 'hidden', boxShadow: D.shadow, flexWrap: 'wrap' }}>
               {['你有想法', '告訴AI需求', 'AI幫你寫', '得到成果'].map((s, i, arr) => (
                 <div key={i} style={{ flex: '1 1 120px', textAlign: 'center', padding: '24px 16px', background: D.card, borderRight: i < arr.length - 1 ? '1px solid #F0EBE3' : 'none' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: D.coral, color: 'white', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>{i + 1}</div>
@@ -487,7 +497,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '40px', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+            <div className="reveal reveal-delay-2" style={{ marginTop: '40px', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
               {['沒有程式基礎的設計師', '想快速實現想法的人', '想解決生活問題的人'].map((w, i) => (
                 <span key={i} style={{ border: `1.5px solid ${D.coral}`, color: D.coral, borderRadius: '100px', padding: '8px 20px', fontSize: '0.875rem' }}>{w}</span>
               ))}
@@ -498,10 +508,10 @@ export default function Home() {
         {/* ══════════ TAB 1 : 學員成果 ══════════ */}
         {tab === 1 && (
           <div style={{ padding: '80px 0', ...maxW }}>
-            <SectionHeader label="STUDENT SHOWCASE" title="素人也能做出真實產品" sub="三位學員從零開始，用設計思考 × Vibe Coding 完成真實可用的產品。" />
+            <SectionHeader label="STUDENT SHOWCASE" title="素人也能做出真實產品" sub="三位學員從零開始，用設計思考 × Vibe Coding 完成真實可用的產品。" className="reveal" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '20px', alignItems: 'start' }}>
               {STUDENTS.map((s, i) => (
-                <div key={i} className="s-card" style={{ background: D.card, borderRadius: '16px', overflow: 'hidden', boxShadow: D.shadow, border: '1.5px solid transparent' }}>
+                <div key={i} className={`s-card reveal reveal-delay-${i + 1}`} style={{ background: D.card, borderRadius: '16px', overflow: 'hidden', boxShadow: D.shadow, border: '1.5px solid transparent' }}>
                   <div style={{ background: '#FDF0E8', padding: '10px 20px', fontSize: '0.75rem', color: D.coral, fontWeight: 600, letterSpacing: '0.05em' }}>{s.tag}</div>
                   <div style={{ padding: '24px' }}>
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: D.navy, marginBottom: '6px' }}>{s.title}</h3>
@@ -555,15 +565,15 @@ export default function Home() {
         {/* ══════════ TAB 2 : Before / After Slider ══════════ */}
         {tab === 2 && (
           <div style={{ padding: '80px 0', ...maxW }}>
-            <SectionHeader label="BEFORE / AFTER" title="同一個產品，差在哪裡？" sub="左邊：沒有 UIUX 核心，直接 Vibe Coding 的結果。右邊：先有設計思考，再用 Vibe Coding 做出來的版本。" />
+            <SectionHeader label="BEFORE / AFTER" title="同一個產品，差在哪裡？" sub="左邊：沒有 UIUX 核心，直接 Vibe Coding 的結果。右邊：先有設計思考，再用 Vibe Coding 做出來的版本。" className="reveal" />
 
-            <BeforeAfterSlider />
+            <div className="reveal reveal-delay-1"><BeforeAfterSlider /></div>
 
             <div style={{ textAlign: 'center', color: D.light, fontSize: '0.875rem', marginTop: '16px' }}>
               ← 左右拖曳，感受設計思考帶來的差距 →
             </div>
 
-            <div style={{ marginTop: '40px', background: D.navy, color: 'white', borderRadius: '16px', padding: '32px 40px', textAlign: 'center', boxShadow: '0 8px 40px rgba(45,53,97,0.2)' }}>
+            <div className="reveal reveal-delay-2" style={{ marginTop: '40px', background: D.navy, color: 'white', borderRadius: '16px', padding: '32px 40px', textAlign: 'center', boxShadow: '0 8px 40px rgba(45,53,97,0.2)' }}>
               <p style={{ fontSize: '1.0625rem', lineHeight: 1.8, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
                 兩個產品的功能完全一樣——都可以發起旅程、加入旅程。<br />
                 差別在於：有沒有先想清楚<strong style={{ color: D.coral, fontWeight: 700 }}>「用戶的感受是什麼」</strong>。<br />
@@ -576,8 +586,8 @@ export default function Home() {
         {/* ══════════ TAB 3 : 現場體驗 ══════════ */}
         {tab === 3 && (
           <div style={{ padding: '80px 0', ...maxW }}>
-            <SectionHeader label="LIVE EXPERIENCE" title="現在就體驗 Vibe Coding 的威力" />
-            <div style={{ background: D.card, borderRadius: '16px', padding: '40px', boxShadow: D.shadow, textAlign: 'center', marginBottom: '32px' }}>
+            <SectionHeader label="LIVE EXPERIENCE" title="現在就體驗 Vibe Coding 的威力" className="reveal" />
+            <div className="reveal reveal-delay-1" style={{ background: D.card, borderRadius: '16px', padding: '40px', boxShadow: D.shadow, textAlign: 'center', marginBottom: '32px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: D.navy, marginBottom: '8px' }}>你現在最想解決生活中的哪個問題？</h3>
               <p style={{ color: D.light, fontSize: '0.9375rem', marginBottom: '28px' }}>選一個，AI 幫你想解法</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '12px', maxWidth: '560px', margin: '0 auto' }}>
@@ -592,7 +602,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <div style={{ background: D.navy, borderRadius: '24px', padding: '48px 40px', textAlign: 'center', boxShadow: '0 8px 40px rgba(45,53,97,0.25)' }}>
+            <div className="reveal reveal-delay-2" style={{ background: D.navy, borderRadius: '24px', padding: '48px 40px', textAlign: 'center', boxShadow: '0 8px 40px rgba(45,53,97,0.25)' }}>
               <div style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' }}>LIVE DEMO</div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'white', marginBottom: '4px' }}>Vibe Coding 做出來的番茄計時器</h3>
               <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', marginBottom: '40px' }}>學員在課堂上用 AI 對話，25 分鐘內做出這個工具。</p>

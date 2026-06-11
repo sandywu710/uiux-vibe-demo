@@ -50,7 +50,7 @@ export default function BeforeAfterSlider() {
         <img
           src="/after/after_2.png"
           alt="After"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block', pointerEvents: 'none' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', pointerEvents: 'none' }}
         />
         <div style={{ position: 'absolute', top: 16, right: 16, background: '#2D3561', color: 'white', padding: '6px 16px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em' }}>
           AFTER ✦ 設計思考 × Vibe Coding
@@ -62,7 +62,7 @@ export default function BeforeAfterSlider() {
         <img
           src="/before/before1.png"
           alt="Before"
-          style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: 'auto', minWidth: '100%', objectFit: 'cover', objectPosition: 'top left', display: 'block', pointerEvents: 'none' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', pointerEvents: 'none' }}
         />
         <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(255,255,255,0.92)', color: '#888', padding: '6px 16px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 600 }}>
           BEFORE 素人 Vibe Coding
