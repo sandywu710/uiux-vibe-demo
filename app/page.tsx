@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import BeforeAfterSlider from './components/BeforeAfterSlider'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const D = {
@@ -249,8 +250,8 @@ const STUDENTS = [
 ]
 
 const STATS = [
-  { label: '真實學員案例', target: 3, suffix: '+' },
-  { label: '從0完成產品', target: 100, suffix: '%' },
+  { label: '課程影片支數', target: 90, suffix: '+' },
+  { label: '學員完成作品', target: 50, suffix: '+' },
   { label: '需要寫程式', target: 0, suffix: '' },
   { label: '課程時數', target: 48, suffix: 'h' },
 ]
@@ -303,23 +304,7 @@ export default function Home() {
   // Hero counting
   const [heroNums, setHeroNums] = useState([0, 0, 0, 0])
 
-  // Slider – zero-lag via direct DOM, no state
-  const containerRef = useRef<HTMLDivElement>(null)
-  const sliderLineRef = useRef<HTMLDivElement>(null)
-  const handleRef = useRef<HTMLDivElement>(null)
-  const beforeLayerRef = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
-  const positionRef = useRef(50)
-
-  const updatePosition = (clientX: number) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    const clamped = Math.min(Math.max((clientX - rect.left) / rect.width * 100, 2), 98)
-    positionRef.current = clamped
-    if (beforeLayerRef.current) beforeLayerRef.current.style.clipPath = `inset(0 ${(100 - clamped).toFixed(2)}% 0 0)`
-    if (sliderLineRef.current) sliderLineRef.current.style.left = `${clamped}%`
-    if (handleRef.current) handleRef.current.style.left = `${clamped}%`
-  }
+  // (slider logic moved to BeforeAfterSlider component)
 
   // Timer
   useEffect(() => {
@@ -346,7 +331,7 @@ export default function Home() {
       }
       requestAnimationFrame(step)
     }
-    animate(0, 3, 1200); animate(1, 100, 1500); animate(3, 48, 1000)
+    animate(0, 90, 1200); animate(1, 50, 1500); animate(3, 48, 1000)
   }, [])
 
   // ESC closes lightbox
@@ -356,22 +341,6 @@ export default function Home() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
-  // Slider drag – window-level, zero-lag
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => { if (!isDragging.current) return; e.preventDefault(); updatePosition(e.clientX) }
-    const onUp = () => { isDragging.current = false }
-    const onTMove = (e: TouchEvent) => { if (!isDragging.current) return; e.preventDefault(); updatePosition(e.touches[0].clientX) }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-    window.addEventListener('touchmove', onTMove, { passive: false })
-    window.addEventListener('touchend', onUp)
-    return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      window.removeEventListener('touchmove', onTMove)
-      window.removeEventListener('touchend', onUp)
-    }
-  }, [])
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   const maxW = { maxWidth: '1000px', margin: '0 auto', paddingLeft: '2rem', paddingRight: '2rem' }
@@ -421,8 +390,6 @@ export default function Home() {
           0%,100% { transform: translateY(0); }
           50%     { transform: translateY(8px); }
         }
-        .slider-wrap { height: 620px; }
-        @media (max-width: 640px) { .slider-wrap { height: 400px; } }
       `}</style>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -591,37 +558,7 @@ export default function Home() {
           <div style={{ padding: '80px 0', ...maxW }}>
             <SectionHeader label="BEFORE / AFTER" title="同一個產品，差在哪裡？" sub="左邊：沒有 UIUX 核心，直接 Vibe Coding 的結果。右邊：先有設計思考，再用 Vibe Coding 做出來的版本。" />
 
-            <div
-              ref={containerRef}
-              className="slider-wrap"
-              onMouseDown={e => { isDragging.current = true; updatePosition(e.clientX) }}
-              onTouchStart={e => { isDragging.current = true; updatePosition(e.touches[0].clientX) }}
-              style={{ position: 'relative', overflow: 'hidden', borderRadius: '20px', cursor: 'col-resize', boxShadow: '0 8px 40px rgba(0,0,0,0.15)', userSelect: 'none' }}
-            >
-              {/* After layer */}
-              <div style={{ position: 'absolute', inset: 0, background: '#FAF5EE' }}>
-                <img src="/after/after_2.png" alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-                <div style={{ position: 'absolute', top: '16px', right: '16px', background: D.navy, color: 'white', padding: '8px 18px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-                  AFTER ✦ 設計思考 × Vibe Coding
-                </div>
-              </div>
-
-              {/* Before layer – clip-path updated via direct DOM, no re-render */}
-              <div ref={beforeLayerRef} style={{ position: 'absolute', inset: 0, clipPath: 'inset(0 50% 0 0)', transition: 'clip-path 0.02s linear', background: '#F2F2F2' }}>
-                <img src="/before/before1.png" alt="Before" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-                <div style={{ position: 'absolute', top: '16px', left: '16px', background: 'rgba(255,255,255,0.9)', color: '#888', padding: '8px 18px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-                  BEFORE 素人 Vibe Coding
-                </div>
-              </div>
-
-              {/* Divider line */}
-              <div ref={sliderLineRef} style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '3px', background: 'white', boxShadow: '0 0 0 1px rgba(0,0,0,0.1)', transform: 'translateX(-50%)', pointerEvents: 'none', zIndex: 3 }} />
-
-              {/* Handle */}
-              <div ref={handleRef} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '48px', height: '48px', borderRadius: '50%', background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: D.coral, fontSize: '0.875rem', fontWeight: 700, pointerEvents: 'none', zIndex: 4 }}>
-                ‹ ›
-              </div>
-            </div>
+            <BeforeAfterSlider />
 
             <div style={{ textAlign: 'center', color: D.light, fontSize: '0.875rem', marginTop: '16px' }}>
               ← 左右拖曳，感受設計思考帶來的差距 →
