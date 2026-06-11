@@ -253,7 +253,6 @@ const STATS = [
   { label: '課程時數', target: 90, suffix: '+' },
   { label: '學員完成作品', target: 50, suffix: '+' },
   { label: '需要寫程式', target: 0, suffix: '' },
-  { label: '課程影片', target: 48, suffix: 'h' },
 ]
 
 const QUESTIONS = [
@@ -331,7 +330,7 @@ export default function Home() {
       }
       requestAnimationFrame(step)
     }
-    animate(0, 90, 1200); animate(1, 50, 1500); animate(3, 48, 1000)
+    animate(0, 90, 1200); animate(1, 50, 1500)
   }, [])
 
   // ESC closes lightbox
@@ -415,7 +414,7 @@ export default function Home() {
             <p style={{ maxWidth: '560px', margin: '1.5rem auto 0', color: D.gray, fontSize: '0.9375rem', lineHeight: 1.7 }}>
               先學會思考，再善用工具。把想法化為有價值的產品，幫助更多人，創造更多影響力。
             </p>
-            <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
+            <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               {STATS.map((s, i) => (
                 <div key={i} style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: '16px', padding: '24px 16px', boxShadow: D.shadow }}>
                   <div style={{ fontSize: '2rem', fontWeight: 700, color: D.coral, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{heroNums[i]}{s.suffix}</div>
