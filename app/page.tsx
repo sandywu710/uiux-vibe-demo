@@ -250,10 +250,10 @@ const STUDENTS = [
 ]
 
 const STATS = [
-  { label: '課程影片支數', target: 90, suffix: '+' },
+  { label: '課程時數', target: 90, suffix: '+' },
   { label: '學員完成作品', target: 50, suffix: '+' },
   { label: '需要寫程式', target: 0, suffix: '' },
-  { label: '課程時數', target: 48, suffix: 'h' },
+  { label: '課程影片', target: 48, suffix: 'h' },
 ]
 
 const QUESTIONS = [
